@@ -1,0 +1,5 @@
+package com.example.etech_practical_task_app
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity: FlutterActivity()
