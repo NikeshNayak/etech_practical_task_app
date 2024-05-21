@@ -1,5 +1,4 @@
 import 'package:etech_practical_task_app/bloc/get_media_bloc/get_media_bloc.dart';
-import 'package:etech_practical_task_app/bloc/get_media_detail_bloc/get_media_detail_bloc.dart';
 import 'package:etech_practical_task_app/bloc_observer.dart';
 import 'package:etech_practical_task_app/utils/network_manager.dart';
 import 'package:etech_practical_task_app/view/page/media_list_page.dart';
@@ -27,15 +26,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(
-          value: GetMediaBloc(),
-        ),
-        BlocProvider.value(
-          value: GetMediaDetailBloc(),
-        ),
-      ],
+    return BlocProvider(
+      create: (context) => GetMediaBloc(),
       child: MaterialApp(
         title: 'Practical Task',
         debugShowCheckedModeBanner: false,

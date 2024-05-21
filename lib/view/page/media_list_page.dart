@@ -2,7 +2,6 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:etech_practical_task_app/bloc/get_media_bloc/get_media_bloc.dart';
-import 'package:etech_practical_task_app/bloc/get_media_detail_bloc/get_media_detail_bloc.dart';
 import 'package:etech_practical_task_app/view/page/media_detail_page.dart';
 import 'package:etech_practical_task_app/view/widgets/media_item_widget.dart';
 import 'package:etech_practical_task_app/view_model/get_media_view_model.dart';
@@ -46,6 +45,7 @@ class _MediaListPageState extends State<MediaListPage> {
 
   @pragma('vm:entry-point')
   static void downloadCallback(String id, int status, int progress) {
+    print('FlutterDownloader.registerCallback :: Media List Page');
     print(
       'Callback on background isolate: '
       'task ($id) is in status ($status) and process ($progress)',
@@ -57,7 +57,7 @@ class _MediaListPageState extends State<MediaListPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_isInit) {
-      _getMediaViewModel = GetMediaViewModel(context.read<GetMediaBloc>(), context.read<GetMediaDetailBloc>());
+      _getMediaViewModel = GetMediaViewModel(context.read<GetMediaBloc>());
       _getMediaViewModel?.fetchMedias();
       _isInit = false;
     }
@@ -93,15 +93,18 @@ class _MediaListPageState extends State<MediaListPage> {
                                     builder: (context) {
                                       return MediaDetailPage(
                                         videoItem: videoItem,
+                                        getMediaViewModel: _getMediaViewModel!,
                                       );
                                     },
                                   ),
                                 ).then((value) {
-                                  _getMediaViewModel?.fetchMedias();
+                                  FlutterDownloader.registerCallback(downloadCallback, step: 1);
+                                  setState(() {});
                                 });
                               },
                               onDownload: () {
                                 _getMediaViewModel?.downloadVideo(
+                                  context,
                                   videoItem.id,
                                   videoItem.sources.first,
                                 );
