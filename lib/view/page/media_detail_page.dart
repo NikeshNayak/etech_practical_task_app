@@ -26,39 +26,37 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
   bool _isInit = true;
   bool _isVideoPlay = false;
   GetMediaViewModel? _getMediaViewModel;
-  late MediaVideoModel videoItem;
 
   @override
   void initState() {
     super.initState();
-    videoItem = widget.videoItem;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_isInit) {
-      _getMediaViewModel = GetMediaViewModel(context.read<GetMediaBloc>());
+      _getMediaViewModel = GetMediaViewModel(context.read<GetMediaBloc>(), context.read<GetMediaDetailBloc>());
+      _getMediaViewModel?.videoItem = widget.videoItem;
       _isInit = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final remainingFileSize = getFileSizeString(bytes: widget.videoItem.fileSize - (((widget.videoItem.progress / 100) * widget.videoItem.fileSize).toInt()));
     return BlocConsumer<GetMediaDetailBloc, GetMediaDetailState>(
       listener: (context, state) {
         if (state is GetMediaDetailSuccessState) {
-          widget.videoItem.taskId = state.mediaVideoModel.taskId;
-          widget.videoItem.downloadTaskStatus = state.mediaVideoModel.downloadTaskStatus;
-          widget.videoItem.progress = state.mediaVideoModel.progress;
+          print('MEDTAIL SCREEN STATE LISTENER');
+          _getMediaViewModel?.videoItem = state.mediaVideoModel;
           setState(() {});
         }
       },
       builder: (context, state) {
+        final remainingFileSize = getFileSizeString(bytes: _getMediaViewModel!.videoItem!.fileSize - (((_getMediaViewModel!.videoItem!.progress / 100) * _getMediaViewModel!.videoItem!.fileSize).toInt()));
         return Scaffold(
           appBar: AppBar(
-            title: Text(widget.videoItem.title),
+            title: Text(_getMediaViewModel!.videoItem!.title),
           ),
           body: Column(
             children: [
@@ -70,10 +68,10 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                       duration: const Duration(milliseconds: 500),
                       child: !_isVideoPlay
                           ? Hero(
-                              tag: widget.videoItem.id,
+                              tag: _getMediaViewModel!.videoItem!.id,
                               child: CachedNetworkImage(
-                                cacheKey: '${widget.videoItem.id}',
-                                imageUrl: '$thumbnailBaseUrl${widget.videoItem.thumb}',
+                                cacheKey: '${_getMediaViewModel!.videoItem!.id}',
+                                imageUrl: '$thumbnailBaseUrl${_getMediaViewModel!.videoItem!.thumb}',
                                 fit: BoxFit.cover,
                                 height: 300,
                                 width: double.infinity,
@@ -92,9 +90,11 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                               ),
                             )
                           : VideoPlayerWidget(
-                              key: ValueKey(widget.videoItem.id),
-                              url: widget.videoItem.downloadTaskStatus == DownloadTaskStatus.complete ? widget.videoItem.sourceFilePath! : widget.videoItem.sources.first,
-                              thumb: '$thumbnailBaseUrl${widget.videoItem.thumb}',
+                              key: ValueKey(_getMediaViewModel!.videoItem!.id),
+                              url: _getMediaViewModel!.videoItem!.downloadTaskStatus == DownloadTaskStatus.complete
+                                  ? _getMediaViewModel!.videoItem!.sourceFilePath!
+                                  : _getMediaViewModel!.videoItem!.sources.first,
+                              thumb: '$thumbnailBaseUrl${_getMediaViewModel!.videoItem!.thumb}',
                               onPause: () {
                                 setState(() {
                                   _isVideoPlay = false;
@@ -102,7 +102,8 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                               },
                             ),
                     ),
-                    if (!_isVideoPlay && (widget.videoItem.downloadTaskStatus == DownloadTaskStatus.undefined || widget.videoItem.downloadTaskStatus == DownloadTaskStatus.complete))
+                    if (!_isVideoPlay &&
+                        (_getMediaViewModel!.videoItem!.downloadTaskStatus == DownloadTaskStatus.undefined || _getMediaViewModel!.videoItem!.downloadTaskStatus == DownloadTaskStatus.complete))
                       Container(
                         color: Colors.black38,
                         alignment: Alignment.center,
@@ -117,9 +118,9 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                           ),
                         ),
                       ),
-                    if (widget.videoItem.downloadTaskStatus == DownloadTaskStatus.enqueued ||
-                        widget.videoItem.downloadTaskStatus == DownloadTaskStatus.running ||
-                        widget.videoItem.downloadTaskStatus == DownloadTaskStatus.paused)
+                    if (_getMediaViewModel!.videoItem!.downloadTaskStatus == DownloadTaskStatus.enqueued ||
+                        _getMediaViewModel!.videoItem!.downloadTaskStatus == DownloadTaskStatus.running ||
+                        _getMediaViewModel!.videoItem!.downloadTaskStatus == DownloadTaskStatus.paused)
                       Container(
                         color: Colors.black38,
                         alignment: Alignment.center,
@@ -151,7 +152,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            widget.videoItem.title,
+                            _getMediaViewModel!.videoItem!.title,
                             style: TextStyle(
                               fontSize: 17,
                               color: Theme.of(context).colorScheme.primary,
@@ -160,12 +161,12 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                             ),
                           ),
                         ),
-                        if (widget.videoItem.downloadTaskStatus == DownloadTaskStatus.running)
+                        if (_getMediaViewModel!.videoItem!.downloadTaskStatus == DownloadTaskStatus.running)
                           InkWell(
                             onTap: !_isVideoPlay
                                 ? () {
                                     _getMediaViewModel?.pauseDownload(
-                                      widget.videoItem.taskId!,
+                                      _getMediaViewModel!.videoItem!.taskId!,
                                     );
                                   }
                                 : null,
@@ -201,18 +202,18 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                               ),
                             ),
                           )
-                        else if (widget.videoItem.downloadTaskStatus == DownloadTaskStatus.paused)
+                        else if (_getMediaViewModel!.videoItem!.downloadTaskStatus == DownloadTaskStatus.paused)
                           InkWell(
                             onTap: !_isVideoPlay
                                 ? () async {
                                     final newTaskId = await _getMediaViewModel?.resumeDownload(
                                       context,
-                                      widget.videoItem.id,
-                                      widget.videoItem.taskId!,
-                                      widget.videoItem.downloadTaskStatus,
-                                      widget.videoItem.progress,
+                                      _getMediaViewModel!.videoItem!.id,
+                                      _getMediaViewModel!.videoItem!.taskId!,
+                                      _getMediaViewModel!.videoItem!.downloadTaskStatus,
+                                      _getMediaViewModel!.videoItem!.progress,
                                     );
-                                    widget.videoItem.taskId = newTaskId;
+                                    _getMediaViewModel!.videoItem!.taskId = newTaskId;
                                   }
                                 : null,
                             child: Container(
@@ -247,11 +248,11 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                               ),
                             ),
                           )
-                        else if (widget.videoItem.downloadTaskStatus != DownloadTaskStatus.complete)
+                        else if (_getMediaViewModel!.videoItem!.downloadTaskStatus != DownloadTaskStatus.complete)
                           InkWell(
                             onTap: !_isVideoPlay
                                 ? () {
-                                    _getMediaViewModel?.downloadVideo(widget.videoItem.id, widget.videoItem.sources.first);
+                                    _getMediaViewModel?.downloadVideo(_getMediaViewModel!.videoItem!.id, _getMediaViewModel!.videoItem!.sources.first);
                                   }
                                 : null,
                             child: Container(
@@ -276,7 +277,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    getFileSizeString(bytes: widget.videoItem.fileSize),
+                                    getFileSizeString(bytes: _getMediaViewModel!.videoItem!.fileSize),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 12,
@@ -290,7 +291,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      widget.videoItem.subtitle,
+                      _getMediaViewModel!.videoItem!.subtitle,
                       style: TextStyle(
                         fontSize: 15,
                         color: Colors.grey.shade500,
@@ -299,7 +300,7 @@ class _MediaDetailPageState extends State<MediaDetailPage> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      widget.videoItem.description,
+                      _getMediaViewModel!.videoItem!.description,
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.black,

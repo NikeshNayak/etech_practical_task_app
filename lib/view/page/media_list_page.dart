@@ -33,11 +33,6 @@ class _MediaListPageState extends State<MediaListPage> {
       int progress = data[2];
       print('_port.listen called : task ($taskId) is in status ($status) and process ($progress)');
       _getMediaViewModel?.updateDownloadProgress(taskId, status, progress);
-      BlocProvider.of<GetMediaDetailBloc>(context).add(UpdateDownloadProgressMediaDetailEvent(
-        taskId: taskId,
-        downloadTaskStatus: status.index,
-        progress: progress,
-      ));
       setState(() {});
     });
     FlutterDownloader.registerCallback(downloadCallback, step: 1);
@@ -55,7 +50,6 @@ class _MediaListPageState extends State<MediaListPage> {
       'Callback on background isolate: '
       'task ($id) is in status ($status) and process ($progress)',
     );
-
     IsolateNameServer.lookupPortByName('downloader_send_port')?.send([id, status, progress]);
   }
 
@@ -63,7 +57,7 @@ class _MediaListPageState extends State<MediaListPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_isInit) {
-      _getMediaViewModel = GetMediaViewModel(context.read<GetMediaBloc>());
+      _getMediaViewModel = GetMediaViewModel(context.read<GetMediaBloc>(), context.read<GetMediaDetailBloc>());
       _getMediaViewModel?.fetchMedias();
       _isInit = false;
     }

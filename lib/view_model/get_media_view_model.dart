@@ -5,17 +5,18 @@ import 'package:etech_practical_task_app/bloc/get_media_detail_bloc/get_media_de
 import 'package:etech_practical_task_app/models/media_video_model.dart';
 import 'package:etech_practical_task_app/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 class GetMediaViewModel extends ChangeNotifier {
   final GetMediaBloc _getMediaBloc;
+  final GetMediaDetailBloc _getMediaDetailBloc;
 
-  GetMediaViewModel(this._getMediaBloc);
+  GetMediaViewModel(this._getMediaBloc, this._getMediaDetailBloc);
 
   List<MediaVideoModel> mediaVideosList = [];
+  MediaVideoModel? videoItem;
 
   void fetchMedias() {
     _getMediaBloc.add(const GetMediaFetchDataEvent());
@@ -52,14 +53,29 @@ class GetMediaViewModel extends ChangeNotifier {
           downloadTaskStatus: downloadTaskStatus.index,
           progress: progress,
         ));
+        _getMediaDetailBloc.add(UpdateDownloadProgressMediaDetailEvent(
+          taskId: taskId,
+          downloadTaskStatus: downloadTaskStatus.index,
+          progress: progress,
+        ));
       } else if (downloadTaskStatus == DownloadTaskStatus.complete) {
         _getMediaBloc.add(UpdateDownloadProgressEvent(
           taskId: taskId,
           downloadTaskStatus: downloadTaskStatus.index,
           progress: progress,
         ));
+        _getMediaDetailBloc.add(UpdateDownloadProgressMediaDetailEvent(
+          taskId: taskId,
+          downloadTaskStatus: downloadTaskStatus.index,
+          progress: progress,
+        ));
       } else {
         _getMediaBloc.add(UpdateDownloadProgressEvent(
+          taskId: taskId,
+          downloadTaskStatus: downloadTaskStatus.index,
+          progress: progress,
+        ));
+        _getMediaDetailBloc.add(UpdateDownloadProgressMediaDetailEvent(
           taskId: taskId,
           downloadTaskStatus: downloadTaskStatus.index,
           progress: progress,
@@ -103,7 +119,7 @@ class GetMediaViewModel extends ChangeNotifier {
         downloadTaskStatus: status.index,
         progress: progress,
       ));
-      BlocProvider.of<GetMediaDetailBloc>(context).add(ResumeDownloadProgressMediaDetailEvent(
+      _getMediaDetailBloc.add(ResumeDownloadProgressMediaDetailEvent(
         videoId: videoId,
         newTaskId: newTaskId,
         downloadTaskStatus: status.index,
